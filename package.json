@@ -1,0 +1,17 @@
+{
+  "name": "arc-reactor-mk24",
+  "version": "1.0.0",
+  "description": "24-toroid plasma containment visualization. Full 3D rotation matrix, chain lightning, Web Audio, 4 color themes, pulse mode. Pure Canvas 2D, no deps.",
+  "author": "David Lee Wise (ROOT0) / TriPod LLC",
+  "license": "CC-BY-ND-4.0",
+  "homepage": "https://github.com/DavidWise01/arc-reactor-mk24",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DavidWise01/arc-reactor-mk24.git"
+  },
+  "keywords": [
+    "toroid", "plasma", "canvas", "3d", "arc-reactor",
+    "jacob-ladder", "web-audio", "visualization",
+    "no-dependencies", "tripod", "root0"
+  ]
+}

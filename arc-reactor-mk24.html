@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARC REACTOR MK-24 | Plasmatonic Toroid Core</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: #000;
+  color: #7dd3fc;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+  cursor: grab;
+}
+#canvas:active { cursor: grabbing; }
+
+/* ── UI Panel ─────────────────────────────────────────── */
+.ui-panel {
+  position: fixed;
+  top: 20px; right: 20px;
+  background: rgba(5,10,20,0.93);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(125,211,252,0.25);
+  border-radius: 12px;
+  padding: 20px;
+  width: 360px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9),
+              inset 0 1px 0 rgba(125,211,252,0.08),
+              0 0 40px rgba(56,189,248,0.12);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+}
+.ui-panel.hidden {
+  transform: translateX(calc(100% + 40px));
+  opacity: 0;
+  pointer-events: none;
+}
+.ui-toggle {
+  position: fixed;
+  top: 20px; right: 20px;
+  width: 48px; height: 48px;
+  background: rgba(5,10,20,0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(125,211,252,0.35);
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 11;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 20px rgba(56,189,248,0.25);
+}
+.ui-toggle:hover {
+  border-color: rgba(125,211,252,0.6);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.9), 0 0 30px rgba(56,189,248,0.45);
+}
+.ui-toggle svg { width:22px; height:22px; stroke:#7dd3fc; stroke-width:2.5; fill:none; }
+
+h1 { font-size:20px; font-weight:700; margin-bottom:4px; color:#7dd3fc;
+     text-shadow:0 0 20px rgba(125,211,252,0.6); letter-spacing:1px; }
+.subtitle { font-size:10px; color:#64748b; margin-bottom:20px;
+            letter-spacing:2px; text-transform:uppercase; }
+
+.control-group { margin-bottom:16px; }
+.control-label { display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:8px; font-size:11px; font-weight:600; color:#94a3b8;
+  text-transform:uppercase; letter-spacing:0.5px; }
+.control-value { color:#7dd3fc; font-weight:700; font-variant-numeric:tabular-nums;
+                 text-shadow:0 0 10px rgba(125,211,252,0.5); }
+
+input[type="range"] {
+  width:100%; height:5px; background:rgba(30,41,59,0.8); border-radius:3px;
+  outline:none; -webkit-appearance:none; cursor:pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:16px; height:16px; background:#38bdf8;
+  border-radius:50%; cursor:pointer; box-shadow:0 0 15px rgba(56,189,248,0.8);
+  transition:all 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform:scale(1.3); }
+input[type="range"]::-moz-range-thumb {
+  width:16px; height:16px; background:#38bdf8;
+  border-radius:50%; cursor:pointer; border:none;
+}
+
+.toggle-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.toggle-row label { font-size:11px; color:#94a3b8; font-weight:600;
+  text-transform:uppercase; letter-spacing:0.5px; }
+.toggle-switch { position:relative; width:44px; height:24px; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider {
+  position:absolute; cursor:pointer;
+  top:0; left:0; right:0; bottom:0;
+  background:rgba(30,41,59,0.8);
+  border:1px solid rgba(100,116,139,0.4);
+  border-radius:12px; transition:0.2s;
+}
+.toggle-slider:before {
+  position:absolute; content:""; height:16px; width:16px;
+  left:3px; bottom:3px; background:#64748b;
+  border-radius:50%; transition:0.2s;
+}
+input:checked + .toggle-slider {
+  background:rgba(56,189,248,0.25);
+  border-color:rgba(125,211,252,0.55);
+  box-shadow:0 0 12px rgba(56,189,248,0.45);
+}
+input:checked + .toggle-slider:before {
+  transform:translateX(20px);
+  background:#7dd3fc;
+}
+
+/* Theme chips */
+.theme-chips { display:flex; gap:6px; flex-wrap:wrap; }
+.chip {
+  font-family:inherit; font-size:10px; letter-spacing:.06em;
+  font-weight:700; text-transform:uppercase;
+  border:1px solid rgba(100,116,139,0.35);
+  background:rgba(30,41,59,0.6);
+  border-radius:18px; padding:5px 11px; cursor:pointer;
+  color:#64748b; transition:all 0.15s ease;
+}
+.chip:hover { border-color:rgba(125,211,252,0.45); color:#94a3b8; }
+.chip.active { color:#7dd3fc; border-color:rgba(125,211,252,0.6);
+               background:rgba(56,189,248,0.12);
+               box-shadow:0 0 10px rgba(56,189,248,0.3); }
+
+.divider { border:none; border-top:1px solid rgba(100,116,139,0.15); margin:14px 0; }
+
+/* Toroid grid */
+.toroid-grid {
+  display:grid; grid-template-columns:repeat(6,1fr);
+  gap:5px; margin-top:10px;
+}
+.toroid-btn {
+  aspect-ratio:1; background:rgba(30,41,59,0.7);
+  border:1px solid rgba(100,116,139,0.3); border-radius:5px;
+  color:#64748b; font-size:9px; font-weight:700; cursor:pointer;
+  transition:all 0.15s ease; display:flex; align-items:center;
+  justify-content:center; font-family:inherit;
+}
+.toroid-btn.active {
+  background:rgba(56,189,248,0.18); border-color:rgba(125,211,252,0.55);
+  color:#7dd3fc; box-shadow:0 0 8px rgba(56,189,248,0.35);
+}
+.toroid-btn:hover { border-color:rgba(125,211,252,0.45); transform:scale(1.08); }
+
+/* Buttons */
+.button-group { display:flex; gap:6px; margin-top:14px; }
+.btn {
+  flex:1; padding:9px; background:rgba(30,41,59,0.7);
+  border:1px solid rgba(100,116,139,0.4); border-radius:6px;
+  color:#94a3b8; font-size:10px; font-weight:700; cursor:pointer;
+  transition:all 0.15s ease; text-transform:uppercase;
+  letter-spacing:0.8px; font-family:inherit;
+}
+.btn:hover { background:rgba(51,65,85,0.9); border-color:rgba(125,211,252,0.45); color:#7dd3fc; }
+.btn.danger { border-color:rgba(239,68,68,0.4); color:#f87171; }
+.btn.danger:hover {
+  background:rgba(220,38,38,0.2); border-color:rgba(239,68,68,0.6);
+  color:#fca5a5; box-shadow:0 0 15px rgba(239,68,68,0.35);
+}
+
+/* Stats */
+.stats {
+  margin-top:16px; padding-top:14px;
+  border-top:1px solid rgba(100,116,139,0.18);
+  font-size:10px; color:#64748b;
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:7px; text-transform:uppercase;
+}
+.stat-value { color:#7dd3fc; font-weight:700; }
+.warning { color:#f59e0b; animation:flash 0.5s ease-in-out infinite; }
+@keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:rgba(30,41,59,0.3); }
+::-webkit-scrollbar-thumb { background:rgba(125,211,252,0.35); border-radius:3px; }
+
+@media(max-width:768px){
+  .ui-panel { width:calc(100% - 20px); top:auto; bottom:10px; right:10px; max-height:48vh; }
+  .ui-toggle { top:auto; bottom:10px; right:10px; }
+  .ui-panel.hidden { transform:translateY(calc(100% + 20px)); }
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="ui-toggle" id="uiToggle">
+  <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+</div>
+
+<div class="ui-panel" id="uiPanel">
+  <h1>ARC REACTOR MK-24</h1>
+  <div class="subtitle">Plasmatonic Containment</div>
+
+  <!-- Theme -->
+  <div class="control-group">
+    <div class="control-label"><span>Color Theme</span></div>
+    <div class="theme-chips" id="themeChips">
+      <button class="chip active" data-theme="plasma">PLASMA</button>
+      <button class="chip"        data-theme="amber">AMBER</button>
+      <button class="chip"        data-theme="solar">SOLAR</button>
+      <button class="chip"        data-theme="void">VOID</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="control-group">
+    <div class="control-label"><span>Power Output</span><span class="control-value" id="powerValue">85%</span></div>
+    <input type="range" id="powerSlider" min="0" max="100" value="85">
+  </div>
+  <div class="control-group">
+    <div class="control-label"><span>Rotation Speed</span><span class="control-value" id="speedValue">1.0x</span></div>
+    <input type="range" id="speedSlider" min="0" max="300" value="100">
+  </div>
+  <div class="control-group">
+    <div class="control-label"><span>Flicker Intensity</span><span class="control-value" id="flickerValue">60%</span></div>
+    <input type="range" id="flickerSlider" min="0" max="100" value="60">
+  </div>
+  <div class="control-group">
+    <div class="control-label"><span>Containment Field</span><span class="control-value" id="fieldValue">75%</span></div>
+    <input type="range" id="fieldSlider" min="0" max="100" value="75">
+  </div>
+  <div class="control-group">
+    <div class="control-label"><span>Chain Lightning</span><span class="control-value" id="lightningValue">40%</span></div>
+    <input type="range" id="lightningSlider" min="0" max="100" value="40">
+  </div>
+
+  <hr class="divider">
+
+  <div class="toggle-row">
+    <label>Outer Housing</label>
+    <label class="toggle-switch"><input type="checkbox" id="housingToggle" checked><span class="toggle-slider"></span></label>
+  </div>
+  <div class="toggle-row">
+    <label>Auto Rotate</label>
+    <label class="toggle-switch"><input type="checkbox" id="autoRotateToggle"><span class="toggle-slider"></span></label>
+  </div>
+  <div class="toggle-row">
+    <label>Pulse Mode</label>
+    <label class="toggle-switch"><input type="checkbox" id="pulseToggle"><span class="toggle-slider"></span></label>
+  </div>
+  <div class="toggle-row">
+    <label>Audio System</label>
+    <label class="toggle-switch"><input type="checkbox" id="audioToggle"><span class="toggle-slider"></span></label>
+  </div>
+
+  <hr class="divider">
+
+  <div class="control-group">
+    <div class="control-label"><span>Toroid Array</span><span class="control-value" id="activeCount">24 / 24</span></div>
+    <div class="toroid-grid" id="toroidGrid"></div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn" id="allOnBtn">All On</button>
+    <button class="btn" id="allOffBtn">All Off</button>
+    <button class="btn danger" id="overloadBtn">Overload</button>
+  </div>
+
+  <div class="stats">
+    <div>FPS: <span class="stat-value" id="fpsValue">60</span></div>
+    <div>Plasma: <span class="stat-value" id="plasmaValue">STABLE</span></div>
+    <div>Field: <span class="stat-value" id="fieldStatus">NOMINAL</span></div>
+    <div>Arcs: <span class="stat-value" id="arcCount">0</span></div>
+    <div>Rot X: <span class="stat-value" id="rotXValue">0°</span></div>
+    <div>Rot Y: <span class="stat-value" id="rotYValue">0°</span></div>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ── Canvas & viewport ──────────────────────────────────────── */
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d', { alpha: false });
+
+let W = canvas.width  = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+let CX = W / 2, CY = H / 2;
+let scale = Math.min(W, H) / 800;
+
+/* ── Color themes ───────────────────────────────────────────── */
+const THEMES = {
+  plasma: { bg:'#060d1a', primary:[125,211,252], secondary:[167,139,250], core:'#7dd3fc', lightning:[125,243,252], field:[125,211,252] },
+  amber:  { bg:'#0a0a08', primary:[196,163,90],  secondary:[184,115,51],  core:'#c4a35a', lightning:[255,210,100], field:[196,163,90]  },
+  solar:  { bg:'#120808', primary:[255,120,60],   secondary:[255,60,30],   core:'#ff7832', lightning:[255,160,80],  field:[255,120,60]  },
+  void:   { bg:'#070a0e', primary:[100,255,160],  secondary:[60,200,120],  core:'#64ffa0', lightning:[120,255,170], field:[90,220,140]  },
+};
+let theme = THEMES.plasma;
+
+/* ── Settings ───────────────────────────────────────────────── */
+const S = {
+  power: 0.85, speed: 1.0, flicker: 0.6, fieldStrength: 0.75,
+  lightningFreq: 0.4, housingVisible: true, audioEnabled: false,
+  autoRotate: false, pulseMode: false,
+  toroidStates: new Array(24).fill(true),
+  overloaded: false, overloadTimer: 0,
+};
+
+/* ── Time & input ───────────────────────────────────────────── */
+const T   = { start: performance.now(), elapsed: 0, dt: 0, prev: performance.now() };
+const fps = { count: 0, last: performance.now(), value: 60 };
+
+// Proper named axes: yaw = horizontal (Y axis), pitch = vertical (X axis)
+const mouse = {
+  down: false, lx: 0, ly: 0,
+  yaw: 0, pitch: 0,
+  targetYaw: 0, targetPitch: 0,
+};
+
+/* ── 3D math ────────────────────────────────────────────────── */
+// Full rotation matrix: yaw (Y axis) then pitch (X axis), then perspective
+function transform3D(lx, ly, lz) {
+  // Yaw (rotate around world Y axis)
+  const cy = Math.cos(mouse.yaw), sy = Math.sin(mouse.yaw);
+  const x1 =  lx * cy + lz * sy;
+  const y1 =  ly;
+  const z1 = -lx * sy + lz * cy;
+
+  // Pitch (rotate around world X axis)
+  const cp = Math.cos(mouse.pitch), sp = Math.sin(mouse.pitch);
+  const x2 = x1;
+  const y2 = y1 * cp - z1 * sp;
+  const z2 = y1 * sp + z1 * cp;
+
+  // Perspective project
+  const FOV = 900;
+  const w = FOV / (FOV + z2);
+  return { sx: CX + x2 * w, sy: CY + y2 * w, z: z2, w };
+}
+
+/* ── Toroids ────────────────────────────────────────────────── */
+const toroids = [];
+for (let i = 0; i < 24; i++) {
+  const t   = i / 23;
+  const tx  = (Math.random() - 0.5) * 0.9;
+  const tz  = (Math.random() - 0.5) * 0.7;
+  toroids.push({
+    idx:    i,
+    radius: (75 + t * 185) * scale,
+    thickness: (13 - t * 7) * scale,
+    angle:  Math.random() * Math.PI * 2,
+    speed:  (Math.random() * 0.7 + 0.35) * (Math.random() > 0.5 ? 1 : -1),
+    phase:  Math.random() * Math.PI * 2,
+    // Two-axis random tilt (precomputed trig)
+    tiltX: tx, tiltZ: tz,
+    cosTX: Math.cos(tx), sinTX: Math.sin(tx),
+    cosTZ: Math.cos(tz), sinTZ: Math.sin(tz),
+    active: true,
+    lastStrike: 0,
+    color: lerpColor(
+      t < 0.5 ? theme.primary : theme.secondary,
+      t < 0.5 ? theme.secondary : theme.primary,
+      t < 0.5 ? t * 2 : (t - 0.5) * 2
+    ),
+  });
+}
+
+// Project a point on a toroid ring (angle θ) to screen coords
+function toroidPoint(tor, angle) {
+  const r = tor.radius;
+  const x0 = r * Math.cos(angle);
+  const y0 = 0;
+  const z0 = r * Math.sin(angle);
+
+  // Tilt around X
+  const y1 = y0 * tor.cosTX - z0 * tor.sinTX;
+  const z1 = y0 * tor.sinTX + z0 * tor.cosTX;
+
+  // Tilt around Z
+  const x2 = x0 * tor.cosTZ - y1 * tor.sinTZ;
+  const y2 = x0 * tor.sinTZ + y1 * tor.cosTZ;
+
+  return transform3D(x2, y2, z1);
+}
+
+// Get a representative screen position for lightning targeting
+function toroidScreenPos(tor) {
+  const a = tor.angle + T.elapsed * tor.speed * S.speed;
+  const p = toroidPoint(tor, a);
+  return { x: p.sx, y: p.sy };
+}
+
+/* ── Particles & arcs ───────────────────────────────────────── */
+const sparks        = [];
+const lightningArcs = [];
+let   lightningAccum = 0;  // proper dt accumulator
+
+/* ── Field lines ────────────────────────────────────────────── */
+const fieldLines = [];
+for (let i = 0; i < 14; i++) {
+  fieldLines.push({ angle: (i / 14) * Math.PI * 2, phase: Math.random() * Math.PI * 2, speed: 0.4 + Math.random() * 0.5 });
+}
+
+/* ── Audio ──────────────────────────────────────────────────── */
+let audioCtx = null, humOsc = null, humGain = null, noiseBuffer = null;
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    humOsc = audioCtx.createOscillator();
+    humOsc.type = 'sawtooth';
+    humOsc.frequency.value = 60;
+
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine'; lfo.frequency.value = 2.3;
+    const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 8;
+    lfo.connect(lfoGain); lfoGain.connect(humOsc.frequency);
+
+    // Soft harmonics
+    const harm = audioCtx.createOscillator();
+    harm.type = 'sine'; harm.frequency.value = 120;
+    const harmGain = audioCtx.createGain(); harmGain.gain.value = 0;
+
+    humGain = audioCtx.createGain(); humGain.gain.value = 0;
+    humOsc.connect(humGain); harm.connect(harmGain); harmGain.connect(humGain);
+    humGain.connect(audioCtx.destination);
+
+    humOsc.start(); lfo.start(); harm.start();
+
+    const bufSize = audioCtx.sampleRate * 2;
+    noiseBuffer = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    const out = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
+  } catch(e) { console.warn('Audio init failed:', e); }
+}
+
+function playCrackle() {
+  if (!audioCtx || !S.audioEnabled || !noiseBuffer) return;
+  const src = audioCtx.createBufferSource();
+  src.buffer = noiseBuffer;
+  const flt = audioCtx.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = 1800;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(0.28 * S.power, audioCtx.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+  src.connect(flt); flt.connect(g); g.connect(audioCtx.destination);
+  src.start();
+}
+
+function playZap() {
+  if (!audioCtx || !S.audioEnabled) return;
+  const osc = audioCtx.createOscillator();
+  osc.type = 'square'; osc.frequency.value = 600 + Math.random() * 1400;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(0.35, audioCtx.currentTime + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.18);
+  const flt = audioCtx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 3500;
+  osc.connect(flt); flt.connect(g); g.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.22);
+}
+
+function updateAudio() {
+  if (!audioCtx || !humGain) return;
+  const rp = renderPower();
+  const tgt = S.audioEnabled ? rp * 0.14 : 0;
+  humGain.gain.linearRampToValueAtTime(tgt, audioCtx.currentTime + 0.1);
+  if (humOsc) humOsc.frequency.setTargetAtTime(60 + rp * 50, audioCtx.currentTime, 0.1);
+}
+
+/* ── Helpers ────────────────────────────────────────────────── */
+function lerpColor(c1, c2, t) {
+  return [ Math.round(c1[0]+(c2[0]-c1[0])*t), Math.round(c1[1]+(c2[1]-c1[1])*t), Math.round(c1[2]+(c2[2]-c1[2])*t) ];
+}
+function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+// Effective render power (pulse-mode aware)
+function renderPower() {
+  if (S.pulseMode) return 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(T.elapsed * 1.4));
+  return S.power;
+}
+
+/* ── Sparks ─────────────────────────────────────────────────── */
+function createSpark(x, y) {
+  const a = Math.random() * Math.PI * 2;
+  const sp = 2 + Math.random() * 5;
+  sparks.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life:1, size:1+Math.random()*2.5, color:theme.primary });
+}
+
+/* ── Lightning ──────────────────────────────────────────────── */
+function genPath(x1,y1,x2,y2,segs) {
+  const pts = [{x:x1,y:y1}];
+  const dx=x2-x1, dy=y2-y1, dist=Math.hypot(dx,dy);
+  for (let i=1; i<segs; i++) {
+    const t=i/segs, off=(Math.random()-0.5)*dist*0.18;
+    const px=-dy/dist, py=dx/dist;
+    pts.push({ x:x1+dx*t+px*off, y:y1+dy*t+py*off });
+  }
+  pts.push({x:x2,y:y2});
+  return pts;
+}
+
+function createChainLightning(startIdx, maxChains) {
+  if (!toroids[startIdx].active) return;
+  const active = toroids.filter(t=>t.active && t.idx!==startIdx);
+  if (!active.length) return;
+  const visited = new Set([startIdx]);
+  let cur = startIdx;
+  const chains = Math.floor(Math.random()*maxChains)+1;
+  for (let i=0; i<chains; i++) {
+    const nearby = active.filter(t=>{ const d=Math.abs(t.idx-cur); return d>0&&d<=5&&!visited.has(t.idx); });
+    if (!nearby.length) break;
+    const target = nearby[Math.floor(Math.random()*nearby.length)];
+    visited.add(target.idx);
+    const from = toroidScreenPos(toroids[cur]);
+    const to   = toroidScreenPos(target);
+    const segs = 7+Math.floor(Math.random()*5);
+    const arc = {
+      path: genPath(from.x,from.y,to.x,to.y,segs),
+      life:1, intensity:0.85+Math.random()*0.15,
+      width:1.5+Math.random()*2, branches:[],
+    };
+    if (Math.random()<0.65) {
+      const bn = 1+Math.floor(Math.random()*2);
+      for (let b=0; b<bn; b++) {
+        const bi = Math.floor(arc.path.length*(0.3+Math.random()*0.4));
+        const bs = arc.path[bi];
+        const ba = Math.random()*Math.PI*2, bl=25+Math.random()*55;
+        arc.branches.push(genPath(bs.x,bs.y, bs.x+Math.cos(ba)*bl, bs.y+Math.sin(ba)*bl, 4));
+      }
+    }
+    lightningArcs.push(arc);
+    toroids[target.idx].lastStrike = T.elapsed;
+    createSpark(to.x, to.y);
+    cur = target.idx;
+  }
+  playZap();
+}
+
+function updateLightning() {
+  lightningAccum += T.dt;
+  const baseChance = S.lightningFreq * renderPower();
+  const mult = S.overloaded ? 6 : 1;
+  const interval = S.overloaded ? 0.08 : 0.4 + Math.random()*0.8;
+
+  if (lightningAccum >= interval) {
+    lightningAccum = 0;
+    if (Math.random() < baseChance * 0.35 * mult) {
+      const act = toroids.filter(t=>t.active);
+      if (act.length > 1) {
+        createChainLightning(act[Math.floor(Math.random()*act.length)].idx, S.overloaded?6:3);
+      }
+    }
+  }
+
+  for (let i=lightningArcs.length-1; i>=0; i--) {
+    lightningArcs[i].life -= T.dt * (S.overloaded ? 0.18 : 0.10);
+    if (lightningArcs[i].life <= 0) lightningArcs.splice(i,1);
+  }
+  document.getElementById('arcCount').textContent = lightningArcs.length;
+}
+
+/* ── Draw functions ─────────────────────────────────────────── */
+
+function drawBackground() {
+  ctx.fillStyle = theme.bg;
+  ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(CX,CY,0, CX,CY,Math.max(W,H)*0.65);
+  g.addColorStop(0, 'rgba(10,22,40,0.5)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+}
+
+function drawHousing() {
+  if (!S.housingVisible) return;
+  ctx.save();
+  ctx.translate(CX,CY);
+
+  const r = 330*scale;
+  // Outer structural ring
+  ctx.strokeStyle = 'rgba(20,30,50,0.95)';
+  ctx.lineWidth = 9*scale;
+  ctx.shadowBlur = 8; ctx.shadowColor = '#000';
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+
+  // Inner accent ring
+  ctx.strokeStyle = `rgba(${theme.primary[0]},${theme.primary[1]},${theme.primary[2]},0.1)`;
+  ctx.lineWidth = 1.5; ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.arc(0,0,r-5*scale,0,Math.PI*2); ctx.stroke();
+
+  // 8 radial supports with bolts
+  for (let i=0; i<8; i++) {
+    const a = (i/8)*Math.PI*2;
+    ctx.strokeStyle = 'rgba(40,55,80,0.85)';
+    ctx.lineWidth = 5*scale;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a)*(r-10*scale), Math.sin(a)*(r-10*scale));
+    ctx.lineTo(Math.cos(a)*(r+12*scale), Math.sin(a)*(r+12*scale));
+    ctx.stroke();
+    // Bolt dot
+    ctx.fillStyle = 'rgba(60,80,110,0.9)';
+    ctx.beginPath();
+    ctx.arc(Math.cos(a)*(r+12*scale), Math.sin(a)*(r+12*scale), 4*scale, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawContainmentField() {
+  if (S.fieldStrength < 0.05) return;
+  const rp = renderPower();
+  const alpha = S.fieldStrength * rp * 0.5;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+
+  const pulseFactor = 1 + Math.sin(T.elapsed*2.5)*0.07;
+  const maxR = 300*scale*pulseFactor;
+
+  fieldLines.forEach(line => {
+    const a = line.angle + T.elapsed*line.speed*0.18;
+    ctx.strokeStyle = rgba(theme.field, alpha * 0.28);
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 12; ctx.shadowColor = rgba(theme.field, 0.7);
+
+    // Dipole-style curved field line
+    ctx.beginPath();
+    for (let t=0; t<=1; t+=0.04) {
+      const r = maxR * t;
+      const curl = Math.sin(t*Math.PI*3 + T.elapsed*1.8 + line.phase) * 18;
+      const x = CX + Math.cos(a)*(r + curl);
+      const y = CY + Math.sin(a)*(r + curl);
+      t===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  });
+
+  // Outer containment ellipse
+  ctx.strokeStyle = rgba(theme.field, alpha * 0.15);
+  ctx.lineWidth = 1.5; ctx.shadowBlur = 20;
+  const ellW = maxR * 1.05, ellH = maxR * 0.92;
+  ctx.beginPath();
+  ctx.ellipse(CX, CY, ellW, ellH, T.elapsed*0.04, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawToroid(tor) {
+  if (!tor.active) return;
+  const rp = renderPower();
+  const flicker = Math.sin(T.elapsed*9 + tor.phase) * S.flicker;
+  const strikeFlash = Math.max(0, 1-(T.elapsed-tor.lastStrike)*6);
+  let intensity = rp * (0.72 + flicker*0.28) + strikeFlash*0.55;
+  if (S.overloaded) intensity *= 1.6;
+
+  const SEGS   = 52;
+  const rotA   = tor.angle + T.elapsed * tor.speed * S.speed;
+  const [r,g,b] = tor.color;
+
+  // Compute all segment endpoints
+  const pts = [];
+  for (let i=0; i<=SEGS; i++) {
+    pts.push(toroidPoint(tor, (i/SEGS)*Math.PI*2 + rotA));
+  }
+
+  ctx.save();
+  ctx.lineCap = 'round';
+
+  // --- Glow pass (blurred, thick, low alpha) ---
+  // Group into 4 depth bands, draw back-to-front
+  const BANDS = 5;
+  const bands = Array.from({length:BANDS}, ()=>[]);
+
+  for (let i=0; i<SEGS; i++) {
+    const p1=pts[i], p2=pts[i+1];
+    const avgZ=(p1.z+p2.z)/2;
+    const depth=(avgZ + tor.radius)/(tor.radius*2); // 0=back, 1=front
+    if (depth < 0.05) continue; // back-face cull
+    const band = Math.min(BANDS-1, Math.floor(depth*BANDS));
+    bands[band].push({p1, p2, depth});
+  }
+
+  for (let b=0; b<BANDS; b++) {
+    if (!bands[b].length) continue;
+    const depth = (b+0.5)/BANDS;
+    const alpha  = intensity * (0.25 + depth*0.75);
+    const bright = 0.45 + depth*0.55;
+
+    // Glow
+    if (b >= BANDS-2) {
+      ctx.strokeStyle = rgba([r,g,b], alpha * 0.3);
+      ctx.lineWidth   = tor.thickness * (1.8 + depth*1.2);
+      ctx.shadowBlur  = 22 * intensity;
+      ctx.shadowColor = rgba([r,g,b], 0.85);
+      ctx.beginPath();
+      bands[b].forEach(s=>{ ctx.moveTo(s.p1.sx,s.p1.sy); ctx.lineTo(s.p2.sx,s.p2.sy); });
+      ctx.stroke();
+    }
+
+    // Core stroke
+    ctx.strokeStyle = rgba([Math.floor(r*bright), Math.floor(g*bright), Math.floor(b*bright)], alpha);
+    ctx.lineWidth   = tor.thickness * (0.6 + depth*0.6);
+    ctx.shadowBlur  = b===BANDS-1 ? 14*intensity : 0;
+    ctx.shadowColor = rgba([r,g,b], 0.7);
+    ctx.beginPath();
+    bands[b].forEach(s=>{ ctx.moveTo(s.p1.sx,s.p1.sy); ctx.lineTo(s.p2.sx,s.p2.sy); });
+    ctx.stroke();
+  }
+
+  // Plasma filaments on front arc
+  if (intensity > 0.25) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let f=0; f<4; f++) {
+      const fa = rotA + f*Math.PI/2;
+      const p  = toroidPoint(tor, fa);
+      const pc = toroidPoint(tor, fa + 0.02);
+      if (p.z < 0) continue;
+      ctx.strokeStyle = `rgba(255,255,255,${intensity*0.3})`;
+      ctx.lineWidth = 1.5; ctx.shadowBlur = 8; ctx.shadowColor='#fff';
+      ctx.beginPath(); ctx.moveTo(p.sx,p.sy); ctx.lineTo(pc.sx,pc.sy); ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+
+  // Sparks
+  if (rp > 0.75 && Math.random() < 0.04 * rp) {
+    const fp = toroidPoint(tor, Math.random()*Math.PI*2+rotA);
+    createSpark(fp.sx, fp.sy);
+  }
+}
+
+function drawLightning() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  lightningArcs.forEach(arc => {
+    const flk = 0.65 + Math.sin(T.elapsed*75+arc.life*8)*0.35;
+    const alpha = arc.life * arc.intensity * flk;
+
+    // Outer glow
+    ctx.strokeStyle = rgba(theme.lightning, alpha * 0.28);
+    ctx.lineWidth = arc.width * 3.5;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.shadowBlur = 22; ctx.shadowColor = rgba(theme.lightning, 1);
+    ctx.beginPath();
+    arc.path.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.stroke();
+
+    // Core bolt
+    ctx.strokeStyle = `rgba(230,250,255,${alpha})`;
+    ctx.lineWidth = arc.width; ctx.shadowBlur = 10;
+    ctx.beginPath();
+    arc.path.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.stroke();
+
+    // Branches
+    arc.branches.forEach(br=>{
+      ctx.strokeStyle = rgba(theme.lightning, alpha*0.55);
+      ctx.lineWidth = arc.width*0.5; ctx.shadowBlur=6;
+      ctx.beginPath();
+      br.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+      ctx.stroke();
+    });
+  });
+  ctx.restore();
+}
+
+function drawCore() {
+  const rp = renderPower();
+  const pulse = 1 + Math.sin(T.elapsed*4)*0.14*rp;
+  const coreR = 28*scale*pulse;
+
+  ctx.save();
+
+  // Outer glow rings (layered)
+  for (let i=4; i>=0; i--) {
+    const sz    = coreR*(1+i*0.9);
+    const alpha = rp*(0.7-i*0.14);
+    ctx.fillStyle = rgba(theme.primary, alpha*0.22);
+    ctx.shadowBlur = 35+i*18; ctx.shadowColor = theme.core;
+    ctx.beginPath(); ctx.arc(CX,CY,sz,0,Math.PI*2); ctx.fill();
+  }
+
+  // Rotating inner rings (visual indicator of rotation)
+  ctx.globalCompositeOperation = 'lighter';
+  for (let r=0; r<3; r++) {
+    const ringR = coreR*(0.5+r*0.25);
+    const a1 = T.elapsed*(0.8+r*0.5);
+    const a2 = T.elapsed*(0.6+r*0.3)+Math.PI;
+    ctx.strokeStyle = rgba(theme.primary, rp*0.5);
+    ctx.lineWidth = 1.5; ctx.shadowBlur = 10; ctx.shadowColor = theme.core;
+    ctx.beginPath();
+    ctx.arc(CX,CY,ringR, a1, a1+Math.PI*1.3); ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(CX,CY,ringR, a2, a2+Math.PI*1.3); ctx.stroke();
+  }
+
+  ctx.globalCompositeOperation = 'source-over';
+
+  // Solid core
+  const g = ctx.createRadialGradient(CX,CY,0, CX,CY,coreR);
+  g.addColorStop(0,   'rgba(255,255,255,1)');
+  g.addColorStop(0.25, rgba(theme.primary, 1));
+  g.addColorStop(0.75, rgba(theme.secondary, 0.85));
+  g.addColorStop(1,   rgba(theme.primary, 0.5));
+  ctx.fillStyle = g; ctx.shadowBlur=28; ctx.shadowColor=theme.core;
+  ctx.beginPath(); ctx.arc(CX,CY,coreR,0,Math.PI*2); ctx.fill();
+
+  // Specular highlight
+  const hl = ctx.createRadialGradient(CX-coreR*0.3, CY-coreR*0.3, 0, CX,CY,coreR);
+  hl.addColorStop(0, 'rgba(255,255,255,0.4)');
+  hl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle=hl; ctx.shadowBlur=0;
+  ctx.beginPath(); ctx.arc(CX,CY,coreR,0,Math.PI*2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawSparks() {
+  sparks.forEach(s=>{
+    s.x+=s.vx; s.y+=s.vy; s.vy+=0.12; s.life-=0.025; s.vx*=0.97;
+    if (s.life<=0) return;
+    ctx.save();
+    ctx.globalAlpha = s.life;
+    ctx.fillStyle = rgba(s.color, s.life);
+    ctx.shadowBlur=8; ctx.shadowColor=rgba(s.color,1);
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.size*s.life,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+  // Remove dead sparks
+  for (let i=sparks.length-1; i>=0; i--) { if(sparks[i].life<=0) sparks.splice(i,1); }
+}
+
+/* ── Update ─────────────────────────────────────────────────── */
+function update() {
+  const now   = performance.now();
+  T.dt        = Math.min((now - T.prev)/1000, 0.05);
+  T.prev      = now;
+  T.elapsed   = (now - T.start)/1000;
+
+  // Smooth mouse rotation
+  const smooth = 0.07;
+  mouse.yaw   += (mouse.targetYaw   - mouse.yaw)   * smooth;
+  mouse.pitch += (mouse.targetPitch - mouse.pitch)  * smooth;
+
+  // Auto-rotate
+  if (S.autoRotate) mouse.targetYaw += T.dt * 0.35 * S.speed;
+
+  // Overload
+  if (S.overloaded) {
+    S.overloadTimer -= T.dt*1000;
+    if (S.overloadTimer <= 0) {
+      S.overloaded = false;
+      document.getElementById('powerSlider').value = Math.round(S.power*100);
+      document.getElementById('powerValue').textContent = Math.round(S.power*100)+'%';
+    } else if (Math.random() < 0.28) {
+      playCrackle();
+      for (let i=0; i<4; i++) {
+        const a=Math.random()*Math.PI*2, r=(80+Math.random()*180)*scale;
+        createSpark(CX+Math.cos(a)*r, CY+Math.sin(a)*r*0.9);
+      }
+    }
+  }
+
+  toroids.forEach((t,i)=> t.active = S.toroidStates[i]);
+  updateLightning();
+
+  // FPS
+  fps.count++;
+  if (now-fps.last >= 1000) {
+    fps.value = Math.round(fps.count*1000/(now-fps.last));
+    document.getElementById('fpsValue').textContent = fps.value;
+    fps.count = 0; fps.last = now;
+  }
+
+  updateStats();
+}
+
+function updateStats() {
+  const active = S.toroidStates.filter(Boolean).length;
+  document.getElementById('activeCount').textContent = `${active} / 24`;
+  document.getElementById('rotXValue').textContent   = `${(mouse.pitch*180/Math.PI).toFixed(0)}°`;
+  document.getElementById('rotYValue').textContent   = `${(mouse.yaw  *180/Math.PI).toFixed(0)}°`;
+
+  const pEl  = document.getElementById('plasmaValue');
+  const fEl  = document.getElementById('fieldStatus');
+  if (S.overloaded) {
+    pEl.textContent='OVERLOAD'; pEl.className='stat-value warning';
+    fEl.textContent='CRITICAL'; fEl.className='stat-value warning';
+  } else if (!active) {
+    pEl.textContent='OFFLINE';  pEl.style.color='#ef4444'; pEl.className='stat-value';
+    fEl.textContent='DOWN';
+  } else if (active < 8) {
+    pEl.textContent='UNSTABLE'; pEl.style.color='#f59e0b'; pEl.className='stat-value';
+    fEl.textContent='WEAK';
+  } else if (active < 16) {
+    pEl.textContent='LOW';      pEl.style.color='#eab308'; pEl.className='stat-value';
+    fEl.textContent='STABLE';
+  } else {
+    pEl.textContent='STABLE';   pEl.style.color=''; pEl.className='stat-value';
+    fEl.textContent='NOMINAL';
+  }
+}
+
+/* ── Render ─────────────────────────────────────────────────── */
+function render() {
+  drawBackground();
+  drawHousing();
+  drawContainmentField();
+
+  // Depth-sort toroids by approximate Z of center (better visual layering)
+  const sorted = toroids
+    .filter(t=>t.active)
+    .map(t=> {
+      const a = t.angle + T.elapsed*t.speed*S.speed;
+      const p = toroidPoint(t, a);
+      return {t, z: p.z};
+    })
+    .sort((a,b)=>a.z-b.z); // back to front
+
+  sorted.forEach(({t})=> drawToroid(t));
+  // Also draw inactive toroids at 5% opacity as ghost rings
+  toroids.filter(t=>!t.active).forEach(tor=>{
+    ctx.save(); ctx.globalAlpha=0.06; drawToroid({...tor, active:true}); ctx.restore();
+  });
+
+  drawLightning();
+  drawCore();
+  drawSparks();
+}
+
+/* ── Main loop ──────────────────────────────────────────────── */
+function animate() {
+  update();
+  render();
+  requestAnimationFrame(animate);
+}
+
+/* ── Resize ─────────────────────────────────────────────────── */
+function handleResize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  CX = W/2; CY = H/2;
+  scale = Math.min(W,H)/800;
+  toroids.forEach((t,i)=>{
+    const n=i/23;
+    t.radius    = (75+n*185)*scale;
+    t.thickness = (13-n*7)*scale;
+  });
+}
+window.addEventListener('resize', handleResize);
+
+/* ── Input ──────────────────────────────────────────────────── */
+canvas.addEventListener('mousedown',  e=>{ mouse.down=true; mouse.lx=e.clientX; mouse.ly=e.clientY; });
+canvas.addEventListener('mousemove',  e=>{
+  if (!mouse.down) return;
+  mouse.targetYaw   += (e.clientX-mouse.lx)*0.006;
+  mouse.targetPitch += (e.clientY-mouse.ly)*0.006;
+  mouse.lx=e.clientX; mouse.ly=e.clientY;
+});
+canvas.addEventListener('mouseup',    ()=>mouse.down=false);
+canvas.addEventListener('mouseleave', ()=>mouse.down=false);
+
+canvas.addEventListener('touchstart', e=>{ mouse.down=true; mouse.lx=e.touches[0].clientX; mouse.ly=e.touches[0].clientY; },{passive:true});
+canvas.addEventListener('touchmove',  e=>{
+  if (!mouse.down) return;
+  mouse.targetYaw   += (e.touches[0].clientX-mouse.lx)*0.006;
+  mouse.targetPitch += (e.touches[0].clientY-mouse.ly)*0.006;
+  mouse.lx=e.touches[0].clientX; mouse.ly=e.touches[0].clientY;
+  e.preventDefault();
+},{passive:false});
+canvas.addEventListener('touchend', ()=>mouse.down=false);
+
+// Double-click to reset view
+canvas.addEventListener('dblclick', ()=>{
+  mouse.targetYaw=0; mouse.targetPitch=0;
+});
+
+/* ── UI handlers ────────────────────────────────────────────── */
+function applyTheme(name) {
+  theme = THEMES[name];
+  // Re-colour toroids
+  toroids.forEach((t,i)=>{
+    const n=i/23;
+    t.color = lerpColor(
+      n<0.5?theme.primary:theme.secondary,
+      n<0.5?theme.secondary:theme.primary,
+      n<0.5?n*2:(n-0.5)*2
+    );
+  });
+  // Update range thumb accent via CSS custom prop
+  document.documentElement.style.setProperty('--accent', theme.core);
+}
+
+document.querySelectorAll('[data-theme]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-theme]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    applyTheme(btn.dataset.theme);
+  });
+});
+
+document.getElementById('powerSlider').addEventListener('input', e=>{
+  S.power=e.target.value/100;
+  document.getElementById('powerValue').textContent=e.target.value+'%';
+  updateAudio();
+});
+document.getElementById('speedSlider').addEventListener('input', e=>{
+  S.speed=e.target.value/100;
+  document.getElementById('speedValue').textContent=(e.target.value/100).toFixed(1)+'x';
+});
+document.getElementById('flickerSlider').addEventListener('input', e=>{
+  S.flicker=e.target.value/100;
+  document.getElementById('flickerValue').textContent=e.target.value+'%';
+});
+document.getElementById('fieldSlider').addEventListener('input', e=>{
+  S.fieldStrength=e.target.value/100;
+  document.getElementById('fieldValue').textContent=e.target.value+'%';
+});
+document.getElementById('lightningSlider').addEventListener('input', e=>{
+  S.lightningFreq=e.target.value/100;
+  document.getElementById('lightningValue').textContent=e.target.value+'%';
+});
+
+document.getElementById('housingToggle').addEventListener('change', e=>S.housingVisible=e.target.checked);
+document.getElementById('autoRotateToggle').addEventListener('change', e=>S.autoRotate=e.target.checked);
+document.getElementById('pulseToggle').addEventListener('change', e=>S.pulseMode=e.target.checked);
+document.getElementById('audioToggle').addEventListener('change', e=>{
+  S.audioEnabled=e.target.checked;
+  if (S.audioEnabled) { initAudio(); if(audioCtx?.state==='suspended') audioCtx.resume(); }
+  updateAudio();
+});
+
+// Toroid grid
+const grid = document.getElementById('toroidGrid');
+for (let i=0; i<24; i++) {
+  const btn = document.createElement('button');
+  btn.className='toroid-btn active'; btn.textContent=i+1;
+  btn.addEventListener('click',()=>{ S.toroidStates[i]=!S.toroidStates[i]; btn.classList.toggle('active'); });
+  grid.appendChild(btn);
+}
+document.getElementById('allOnBtn').addEventListener('click',()=>{
+  S.toroidStates.fill(true); document.querySelectorAll('.toroid-btn').forEach(b=>b.classList.add('active'));
+});
+document.getElementById('allOffBtn').addEventListener('click',()=>{
+  S.toroidStates.fill(false); document.querySelectorAll('.toroid-btn').forEach(b=>b.classList.remove('active'));
+});
+document.getElementById('overloadBtn').addEventListener('click',()=>{
+  S.overloaded=true; S.overloadTimer=3500; S.power=1.25;
+  document.getElementById('powerSlider').value=125;
+  document.getElementById('powerValue').textContent='125%';
+  updateAudio(); playCrackle();
+});
+document.getElementById('uiToggle').addEventListener('click',()=>{
+  document.getElementById('uiPanel').classList.toggle('hidden');
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e=>{
+  if(e.code==='Space')  { e.preventDefault(); document.getElementById('uiPanel').classList.toggle('hidden'); }
+  if(e.code==='KeyR')   { mouse.targetYaw=0; mouse.targetPitch=0; }
+  if(e.code==='KeyP')   { document.getElementById('pulseToggle').click(); }
+  if(e.code==='KeyA')   { document.getElementById('autoRotateToggle').click(); }
+  if(e.code==='KeyO')   { document.getElementById('overloadBtn').click(); }
+});
+
+// Start
+animate();
+})();
+</script>
+</body>
+</html>

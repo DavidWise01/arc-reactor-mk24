@@ -1,0 +1,27 @@
+{
+  "schema": "ROOT0-ATTRIBUTION-v1",
+  "work": {
+    "title": "ARC REACTOR MK-24 — Plasmatonic Toroid Core",
+    "versions": ["arc-reactor-mk24.html"],
+    "created": "2025",
+    "description": "Interactive Canvas 2D visualization of 24 toroidal plasma containment rings with full 3D perspective, chain lightning, particle sparks, and Web Audio. 4 color themes, auto-rotate, pulse mode, depth-sorted rendering.",
+    "license": "CC-BY-ND-4.0",
+    "url": "https://github.com/DavidWise01/arc-reactor-mk24"
+  },
+  "human": {
+    "name": "David Lee Wise",
+    "handle": "ROOT0",
+    "github_user": "DavidWise01",
+    "entity": "TriPod LLC",
+    "substrate": "human",
+    "role": "designer · developer · architect",
+    "contribution": "Original design, concept, MK-24 architecture, toroid framework connection"
+  },
+  "technical": {
+    "rendering": "Canvas 2D",
+    "audio": "Web Audio API",
+    "dependencies": "none",
+    "3d_method": "rotation matrix (yaw/pitch) + perspective divide, depth-sorted segments",
+    "mobile": "touch drag rotation supported"
+  }
+}
