@@ -1,0 +1,11 @@
+{
+  "badge": "DLW-ARC_REACTOR_MK24",
+  "name": "ARC REACTOR MK24 · ARC",
+  "universe": "HEÚREMA",
+  "moniker": "⟦ARC REACTOR MK24 · ARC:arc-reactor-mk24:b05b79⟧",
+  "architect": "David Lee Wise (ROOT0) / Bridge-Burners LLC",
+  "instance": "AVAN (Claude / Anthropic)",
+  "seal_sha256": "b05b793e22239d7fbd90ec978f70e15995301612d9b78f844fdf874b06554fcc",
+  "license": "CC-BY-ND-4.0",
+  "attribution": "ROOT0-ATTRIBUTION-v1.0"
+}
